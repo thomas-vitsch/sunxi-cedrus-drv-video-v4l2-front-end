@@ -48,6 +48,11 @@ VAStatus sunxi_cedrus_render_mpeg2_slice_data(VADriverContextP ctx,
 	struct v4l2_buffer buf;
 	struct v4l2_plane plane[1];
 
+	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2_slice_data: buffer size=%d\n", 
+		obj_buffer->size);
+	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2_slice_data: input_buf_index = %d\n",
+		obj_surface->input_buf_index);
+
 	memset(plane, 0, sizeof(struct v4l2_plane));
 
 	/* Query */
@@ -80,7 +85,15 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 	INIT_DRIVER_DATA
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 
+
+
 	VAPictureParameterBufferMPEG2 *pic_param = (VAPictureParameterBufferMPEG2 *)obj_buffer->buffer_data;
+
+	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2_picture_parameter\n");
+	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2 with pic_param->horizontal_size %d, \
+		and pic_param->vertical_size\n",
+		pic_param->horizontal_size, pic_param->vertical_size);
+
 	obj_context->mpeg2_frame_hdr.type = MPEG2;
 
 	obj_context->mpeg2_frame_hdr.width = pic_param->horizontal_size;
@@ -102,15 +115,23 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 	obj_context->mpeg2_frame_hdr.alternate_scan = pic_param->picture_coding_extension.bits.alternate_scan;
 
 	object_surface_p fwd_surface = SURFACE(pic_param->forward_reference_picture);
-	if(fwd_surface)
+	if(fwd_surface) {
+		sunxi_cedrus_msg("-- We got a pic_param->forward_reference_picture with \
+			fwd_surface->output_buf_index %d\n", fwd_surface->output_buf_index);
 		obj_context->mpeg2_frame_hdr.forward_index = fwd_surface->output_buf_index;
-	else
+	} else {
+		sunxi_cedrus_msg("-- We got no fwd_surface\n");
 		obj_context->mpeg2_frame_hdr.forward_index = obj_surface->output_buf_index;
+	}
 	object_surface_p bwd_surface = SURFACE(pic_param->backward_reference_picture);
-	if(bwd_surface)
+	if(bwd_surface) {
+		sunxi_cedrus_msg("-- We got a pic_param->backward_reference_picture with \
+			bwd_surface->output_buf_index %d\n", bwd_surface->output_buf_index);
 		obj_context->mpeg2_frame_hdr.backward_index = bwd_surface->output_buf_index;
-	else
+	} else {
+		sunxi_cedrus_msg("-- We got no bwd_surface\n");
 		obj_context->mpeg2_frame_hdr.backward_index = obj_surface->output_buf_index;
+	}
 
 	return vaStatus;
 }

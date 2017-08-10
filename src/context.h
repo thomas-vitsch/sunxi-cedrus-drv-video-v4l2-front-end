@@ -33,6 +33,7 @@
 /* We can't dynamically call VIDIOC_REQBUFS for every MPEG slice we create.
  * Indeed, the queue might be busy processing a previous buffer, so we need to
  * pre-allocate a set of buffers with a max size */
+ //AAAAAAARRRRRRGH thomas: hier doen we maar x 10 :P
 #define INPUT_BUFFER_MAX_SIZE		131072
 #define INPUT_BUFFERS_NB		4
 

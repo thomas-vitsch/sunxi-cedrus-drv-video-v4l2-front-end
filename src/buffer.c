@@ -54,17 +54,30 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 
 	memset(plane, 0, sizeof(struct v4l2_plane));
 
+	sunxi_cedrus_msg("sunxi_cedrus_CreateBuffer called with num_elements %d and data_ptr%p\n", 
+		num_elements, data);
+
 	/* Validate type */
 	switch (type)
 	{
 		case VAPictureParameterBufferType:
+			sunxi_cedrus_msg("create buffer : VAPictureParameterBufferType\n");
+			break;
 		case VAIQMatrixBufferType: /* Ignored */
+			sunxi_cedrus_msg("create buffer : VAIQMatrixBufferType\n");
+			break;
 		case VASliceParameterBufferType:
+			sunxi_cedrus_msg("create buffer : VASliceParameterBufferType\n");
+			break;
 		case VASliceDataBufferType:
+			sunxi_cedrus_msg("create buffer : VASliceDataBufferType\n");
+			break;
 		case VAImageBufferType:
+			sunxi_cedrus_msg("create buffer : VAImageBufferType\n");
 			/* Ok */
 			break;
 		default:
+			sunxi_cedrus_msg("create buffer : unsupported\n");
 			vaStatus = VA_STATUS_ERROR_UNSUPPORTED_BUFFERTYPE;
 			return vaStatus;
 	}
@@ -73,6 +86,7 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 	obj_buffer = BUFFER(bufferID);
 	if (NULL == obj_buffer)
 	{
+		sunxi_cedrus_msg("VA_STATUS_ERROR_ALLOCATION_FAILED 1\n");
 		vaStatus = VA_STATUS_ERROR_ALLOCATION_FAILED;
 		return vaStatus;
 	}
@@ -102,8 +116,10 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 	} else
 		obj_buffer->buffer_data = realloc(obj_buffer->buffer_data, size * num_elements);
 
-	if (obj_buffer->buffer_data == NULL)
+	if (obj_buffer->buffer_data == NULL) {
+		sunxi_cedrus_msg("VA_STATUS_ERROR_ALLOCATION_FAILED 2\n");
 		return VA_STATUS_ERROR_ALLOCATION_FAILED;
+	}
 
 	if (VA_STATUS_SUCCESS == vaStatus)
 	{
@@ -111,10 +127,15 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 		obj_buffer->num_elements = num_elements;
 		obj_buffer->size = size;
 
+		sunxi_cedrus_msg("Thomas: data size = %d\n", size);
+
 		if (data)
 			memcpy(obj_buffer->buffer_data, data,
 					size * num_elements);
+		else
+			sunxi_cedrus_msg("Data == NULL\n");
 	}
+	
 
 	if (VA_STATUS_SUCCESS == vaStatus)
 		*buf_id = bufferID;
@@ -129,6 +150,9 @@ VAStatus sunxi_cedrus_BufferSetNumElements(VADriverContextP ctx,
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 	object_buffer_p obj_buffer = BUFFER(buf_id);
 	assert(obj_buffer);
+
+	sunxi_cedrus_msg("sunxi_cedrus_BufferSetNumElements: num_elements = %d \
+		for buffer_id %d\n", num_elements, buf_id); 
 
 	if ((num_elements < 0) || (num_elements > obj_buffer->max_num_elements))
 		vaStatus = VA_STATUS_ERROR_UNKNOWN;
@@ -145,6 +169,9 @@ VAStatus sunxi_cedrus_MapBuffer(VADriverContextP ctx, VABufferID buf_id,
 	VAStatus vaStatus = VA_STATUS_ERROR_UNKNOWN;
 	object_buffer_p obj_buffer = BUFFER(buf_id);
 	assert(obj_buffer);
+	
+	sunxi_cedrus_msg("sunxi_cedrus_MapBuffer\n");
+	
 	if (NULL == obj_buffer)
 	{
 		vaStatus = VA_STATUS_ERROR_INVALID_BUFFER;
@@ -162,6 +189,7 @@ VAStatus sunxi_cedrus_MapBuffer(VADriverContextP ctx, VABufferID buf_id,
 VAStatus sunxi_cedrus_UnmapBuffer(VADriverContextP ctx, VABufferID buf_id)
 {
 	/* Do nothing */
+	sunxi_cedrus_msg("sunxi_cedrus_UnmapBuffer\n");
 	return VA_STATUS_SUCCESS;
 }
 

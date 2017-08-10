@@ -42,6 +42,18 @@
 
 #include <linux/videodev2.h>
 
+#define OUTPUT_BUFFER_DATA_TO_FILE
+
+#ifdef OUTPUT_BUFFER_DATA_TO_FILE
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <err.h>
+
+int fp = -1;
+const char *file_path = "/tmp/vaapi_cedrus_buffer_output.bin";
+#endif
+
 /*
  * A Picture is an encoded input frame made of several buffers. A single input
  * can contain slice data, headers and IQ matrix. Each Picture is assigned a
@@ -57,6 +69,8 @@ VAStatus sunxi_cedrus_BeginPicture(VADriverContextP ctx, VAContextID context,
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 	object_context_p obj_context;
 	object_surface_p obj_surface;
+
+	sunxi_cedrus_msg("%s\n", __FUNCTION__);
 
 	obj_context = CONTEXT(context);
 	assert(obj_context);
@@ -86,7 +100,13 @@ VAStatus sunxi_cedrus_RenderPicture(VADriverContextP ctx, VAContextID context,
 	object_surface_p obj_surface;
 	object_config_p obj_config;
 	int i;
+#ifdef OUTPUT_BUFFER_DATA_TO_FILE
+	uint32_t buffer_size;
+//	uint8_t buffer_type;
+	ssize_t ret;
+#endif
 
+	sunxi_cedrus_msg("%s\n", __FUNCTION__);
 	obj_context = CONTEXT(context);
 	assert(obj_context);
 
@@ -101,6 +121,7 @@ VAStatus sunxi_cedrus_RenderPicture(VADriverContextP ctx, VAContextID context,
 	assert(obj_surface);
 
 	/* verify that we got valid buffer references */
+	sunxi_cedrus_msg("Picture with %d buffers\n", num_buffers);
 	for(i = 0; i < num_buffers; i++)
 	{
 		object_buffer_p obj_buffer = BUFFER(buffers[i]);
@@ -110,6 +131,27 @@ VAStatus sunxi_cedrus_RenderPicture(VADriverContextP ctx, VAContextID context,
 			vaStatus = VA_STATUS_ERROR_INVALID_BUFFER;
 			break;
 		}
+
+#ifdef OUTPUT_BUFFER_DATA_TO_FILE
+		if (fp == -1) {
+			fp = open(file_path, O_APPEND | O_CREAT | O_RDWR);
+			if (fp < 0)
+				sunxi_cedrus_msg("Could not open file\n");
+		}
+		if (fp >= 0) {
+			buffer_size = (obj_buffer->size * obj_buffer->num_elements);
+			sunxi_cedrus_msg("Add buffer with id %d, size %d, num_elements %d\n", 
+				obj_buffer->type, buffer_size, obj_buffer->num_elements);
+			write(fp, &obj_buffer->type, 4);
+			write(fp, &buffer_size, 4);
+			write(fp, &obj_buffer->num_elements, 4);
+			ret = write(fp, obj_buffer->buffer_data, buffer_size);
+			if (ret != buffer_size) {
+				sunxi_cedrus_msg("ARGH! ret=%d, buffer_size=%d\n", ret, buffer_size);
+				err(1, "ARGH! ret=%d, buffer_size=%d\n", ret, buffer_size);
+			}
+		}
+#endif
 
 		switch(obj_config->profile) {
 			case VAProfileMPEG2Simple:
@@ -153,6 +195,8 @@ VAStatus sunxi_cedrus_EndPicture(VADriverContextP ctx, VAContextID context)
 	obj_context = CONTEXT(context);
 	assert(obj_context);
 
+	sunxi_cedrus_msg("%s current_render_target = %d\n", 
+		__FUNCTION__, obj_context->current_render_target);
 	obj_surface = SURFACE(obj_context->current_render_target);
 	assert(obj_surface);
 
@@ -184,6 +228,7 @@ VAStatus sunxi_cedrus_EndPicture(VADriverContextP ctx, VAContextID context)
 	switch(obj_config->profile) {
 		case VAProfileMPEG2Simple:
 		case VAProfileMPEG2Main:
+			sunxi_cedrus_msg("Using a VAProfileMPEG2*(simple/main\n");
 			out_buf.m.planes[0].bytesused = obj_context->mpeg2_frame_hdr.slice_len/8;
 			ctrl.id = V4L2_CID_MPEG_VIDEO_MPEG2_FRAME_HDR;
 			ctrl.ptr = &obj_context->mpeg2_frame_hdr;
@@ -192,12 +237,14 @@ VAStatus sunxi_cedrus_EndPicture(VADriverContextP ctx, VAContextID context)
 		case VAProfileMPEG4Simple:
 		case VAProfileMPEG4AdvancedSimple:
 		case VAProfileMPEG4Main:
-			out_buf.m.planes[0].bytesused = obj_context->mpeg4_frame_hdr.slice_len/8;
+			sunxi_cedrus_msg("Using a VAProfileMPEG4*(simple/advancedsimple/main\n");
+			out_buf.m.planes[0].bytesused = obj_context->mpeg4_frame_hdr.slice_len/8;			
 			ctrl.id = V4L2_CID_MPEG_VIDEO_MPEG4_FRAME_HDR;
 			ctrl.ptr = &obj_context->mpeg4_frame_hdr;
 			ctrl.size = sizeof(obj_context->mpeg4_frame_hdr);
 			break;
 		default:
+			sunxi_cedrus_msg("Error, this is an unkonw VAProfile\n");
 			out_buf.m.planes[0].bytesused = 0;
 			ctrl.id = V4L2_CID_MPEG_VIDEO_MPEG2_FRAME_HDR;
 			ctrl.ptr = NULL;

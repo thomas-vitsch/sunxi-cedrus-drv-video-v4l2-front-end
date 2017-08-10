@@ -57,6 +57,9 @@ VAStatus sunxi_cedrus_CreateContext(VADriverContextP ctx, VAConfigID config_id,
 	struct v4l2_format fmt;
 	enum v4l2_buf_type type;
 
+	sunxi_cedrus_msg("CreateContext with picture_width %d, picture_height %d\n",
+		picture_width, picture_height);
+
 	obj_config = CONFIG(config_id);
 	if (NULL == obj_config)
 	{

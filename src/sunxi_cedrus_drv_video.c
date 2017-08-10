@@ -49,15 +49,18 @@
 
 #include <linux/videodev2.h>
 
+//#define ENABLE_CEDRUS_OUTPUT
 /* We need to use stderr if we want to be heard */
 void sunxi_cedrus_msg(const char *msg, ...)
 {
+#ifdef ENABLE_CEDRUS_OUTPUT
 	va_list args;
 
 	fprintf(stderr, "sunxi_cedrus_drv_video: ");
 	va_start(args, msg);
 	vfprintf(stderr, msg, args);
 	va_end(args);
+#endif
 }
 
 /* Free memory and close v4l device */

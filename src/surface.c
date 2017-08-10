@@ -63,6 +63,9 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 	struct v4l2_create_buffers create_bufs;
 	struct v4l2_format fmt;
 
+	sunxi_cedrus_msg("CreateSurface with width %d, height %d\n",
+		width, height);
+
 	memset(planes, 0, 2 * sizeof(struct v4l2_plane));
 
 	/* We only support one format */

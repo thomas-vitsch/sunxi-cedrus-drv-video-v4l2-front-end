@@ -59,6 +59,17 @@ VAStatus sunxi_cedrus_CreateImage(VADriverContextP ctx, VAImageFormat *format,
 	image->width = width;
 	image->height = height;
 
+	sunxi_cedrus_msg("Creating an image in sunxi_cedrus_CreateImage\n");
+	sunxi_cedrus_msg("\tformat->fourcc 0x%x (%d)\n", format->fourcc, format->fourcc);
+	sunxi_cedrus_msg("\tformat->byte_order 0x%x (%d)\n", format->byte_order, format->byte_order);
+	sunxi_cedrus_msg("\tformat->bits_per_pixel 0x%x (%d)\n", format->bits_per_pixel, format->bits_per_pixel);
+	sunxi_cedrus_msg("\tformat->depth 0x%x (%d)\n", format->depth, format->depth);
+	sunxi_cedrus_msg("\tformat->red_mask 0x%x (%d)\n", format->red_mask, format->red_mask);
+	sunxi_cedrus_msg("\tformat->green_mask 0x%x (%d)\n", format->green_mask, format->green_mask);
+	sunxi_cedrus_msg("\tformat->blue_mask 0x%x (%d)\n", format->blue_mask, format->blue_mask);
+
+	sunxi_cedrus_msg("\twidth = %d, heigt = %d\n", width, height);
+	
 	sizeY    = image->width * image->height;
 	sizeUV   = ((image->width+1) * (image->height+1)/2);
 

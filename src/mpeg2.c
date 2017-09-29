@@ -66,6 +66,8 @@ VAStatus sunxi_cedrus_render_mpeg2_slice_data(VADriverContextP ctx,
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_QUERYBUF, &buf)==0);
 
 	/* Populate frame */
+	/* Thomas: todo understand if the following code is actually usefull.
+	 * Maybe it is just a check to see if the data can be mmap'ed???? */
 	char *src_buf = mmap(NULL, obj_buffer->size,
 			PROT_READ | PROT_WRITE, MAP_SHARED,
 			driver_data->mem2mem_fd, buf.m.planes[0].m.mem_offset);

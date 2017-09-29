@@ -49,7 +49,20 @@
 
 #include <linux/videodev2.h>
 
-//#define ENABLE_CEDRUS_OUTPUT
+#include <misc/sunxi_front_end.h>
+#include <drm/drm_fourcc.h>
+
+#define ENABLE_CEDRUS_OUTPUT
+
+struct sfe_config fe_conf = {
+	.input_fmt = DRM_FORMAT_YUV420,
+	.output_fmt = DRM_FORMAT_XRGB8888,
+	.in_width = 864,
+	.in_height = 840,
+	.out_width = 864,
+	.out_height = 840
+}; //TODO: Unless we can really scale the frontend hardcode this for big buck bunneh
+
 /* We need to use stderr if we want to be heard */
 void sunxi_cedrus_msg(const char *msg, ...)
 {
@@ -78,6 +91,7 @@ VAStatus sunxi_cedrus_Terminate(VADriverContextP ctx)
 	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
 
 	close(driver_data->mem2mem_fd);
+	close(driver_data->de_frontend_fd);
 
 	/* Clean up left over buffers */
 	obj_buffer = (object_buffer_p) object_heap_first(&driver_data->buffer_heap, &iter);
@@ -189,6 +203,13 @@ VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
 
 	driver_data->mem2mem_fd = open("/dev/video0", O_RDWR | O_NONBLOCK, 0);
 	assert(driver_data->mem2mem_fd >= 0);
+
+	//Thomas: Open Allwinner Display Engine Frontend device.
+	// ???NON_BLOCK???
+	driver_data->de_frontend_fd = open("/dev/sunxi_front_end", O_RDWR | O_NONBLOCK, 0);
+	assert(driver_data->de_frontend_fd >= 0);
+
+	assert(ioctl(driver_data->de_frontend_fd, SFE_IOCTL_SET_CONFIG, &fe_conf) == 0);
 
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_QUERYCAP, &cap)==0);
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))

@@ -37,6 +37,7 @@
 #include <linux/videodev2.h>
 
 #include <X11/Xlib.h>
+#include <misc/sunxi_front_end.h>
 
 /*
  * A Surface is an internal data structure never handled by the VA's user
@@ -69,7 +70,7 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 	memset(planes, 0, 2 * sizeof(struct v4l2_plane));
 
 	/* We only support one format */
-	if (VA_RT_FORMAT_YUV420 != format)
+	if (VA_RT_FORMAT_YUV420 != format) 
 		return VA_STATUS_ERROR_UNSUPPORTED_RT_FORMAT;
 
 	/* Set format for capture */
@@ -149,6 +150,9 @@ VAStatus sunxi_cedrus_DestroySurfaces(VADriverContextP ctx,
 {
 	INIT_DRIVER_DATA
 	int i;
+	
+	sunxi_cedrus_msg("sunxi_cedrus_DestroySurface\n");
+	
 	for(i = num_surfaces; i--;)
 	{
 		object_surface_p obj_surface = SURFACE(surface_list[i]);
@@ -168,6 +172,8 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 	struct v4l2_plane planes[2];
         fd_set read_fds;
 	struct timeval tv = {0, 300000};
+	
+	sunxi_cedrus_msg("sunxi_cedrus_SyncSurface\n");
 
 	memset(plane, 0, sizeof(struct v4l2_plane));
 	memset(planes, 0, 2 * sizeof(struct v4l2_plane));
@@ -181,6 +187,10 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 		select(driver_data->mem2mem_fd + 1, &read_fds, NULL, NULL, &tv);
 	else
 		return VA_STATUS_ERROR_UNKNOWN;
+
+	//Test if we can throw the buffer back to the Allwinner Display Engine 
+	// Frontend Kernel Module.
+	assert(ioctl(driver_data->de_frontend_fd, SFE_IOCTL_UPDATE_BUFFER, &buf)==0);
 
 	memset(&(buf), 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;

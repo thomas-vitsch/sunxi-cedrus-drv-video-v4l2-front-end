@@ -29,6 +29,7 @@
 #include "buffer.h"
 
 #include <assert.h>
+#include <string.h>
 
 #include "tiled_yuv.h"
 
@@ -38,12 +39,21 @@
  * proprietary tiled pixel format with tiled_yuv when deriving an Image from a
  * Surface.
  */
+/* Thomas: todo add support for XRGB8888
+ * From ARMSOC: "Initialized a depth-32 visual for XRGB8888"
+ * We want to be able to output the format reported by ARMSOC
+ * Which means the surface should become this format.
+ * Internal yuv420 buffers are already allocated by this driver.
+ * Add additional buffers for the color space conversion from yuv420
+ * to xrgb8888.
+ */
 
 VAStatus sunxi_cedrus_QueryImageFormats(VADriverContextP ctx,
 		VAImageFormat *format_list, int *num_formats)
 {
-	format_list[0].fourcc = VA_FOURCC_NV12;
-	*num_formats = 1;
+	format_list[0].fourcc = VA_FOURCC_XRGB;	
+	format_list[1].fourcc = VA_FOURCC_NV12;
+	*num_formats = 2;
 	return VA_STATUS_SUCCESS;
 }
 
@@ -53,6 +63,9 @@ VAStatus sunxi_cedrus_CreateImage(VADriverContextP ctx, VAImageFormat *format,
 	INIT_DRIVER_DATA
 	int sizeY, sizeUV;
 	object_image_p obj_img;
+
+	sunxi_cedrus_msg("sunxi_cedrus_CreateImage\n");
+
 
 	image->format = *format;
 	image->buf = VA_INVALID_ID;
@@ -102,8 +115,11 @@ VAStatus sunxi_cedrus_DeriveImage(VADriverContextP ctx, VASurfaceID surface,
 	object_buffer_p obj_buffer;
 	VAStatus ret;
 
+	sunxi_cedrus_msg("sunxi_cedrus_DeriveImage\n");
+
 	obj_surface = SURFACE(surface);
-	fmt.fourcc = VA_FOURCC_NV12;
+//	fmt.fourcc = VA_FOURCC_NV12;
+	fmt.fourcc = VA_FOURCC_XRGB;
 
 	ret = sunxi_cedrus_CreateImage(ctx, &fmt, obj_surface->width,
 			obj_surface->height, image);
@@ -114,9 +130,20 @@ VAStatus sunxi_cedrus_DeriveImage(VADriverContextP ctx, VASurfaceID surface,
 	if (NULL == obj_buffer)
 		return VA_STATUS_ERROR_ALLOCATION_FAILED;
 
+	uint32_t i;
+	uint32_t color = 0xffff0000;
+	
+	for (i = 0; i < 100*100; i++) {
+		memcpy(driver_data->luma_bufs[obj_surface->output_buf_index], &color, 4);
+	}
+
 	/* TODO: Use an appropriate DRM plane instead */
 	tiled_to_planar(driver_data->luma_bufs[obj_surface->output_buf_index], obj_buffer->buffer_data, image->pitches[0], image->width, image->height);
 	tiled_to_planar(driver_data->chroma_bufs[obj_surface->output_buf_index], obj_buffer->buffer_data + image->width*image->height, image->pitches[1], image->width, image->height/2);
+
+	//This will detile the buffers
+	//Now send the buffers here to the mixer processor.
+
 
 	return VA_STATUS_SUCCESS;
 }
@@ -125,6 +152,8 @@ VAStatus sunxi_cedrus_DestroyImage(VADriverContextP ctx, VAImageID image)
 {
 	INIT_DRIVER_DATA
 	object_image_p obj_img;
+
+	sunxi_cedrus_msg("sunxi_cedrus_DestroyImage\n");
 
 	obj_img = IMAGE(image);
 	assert(obj_img);

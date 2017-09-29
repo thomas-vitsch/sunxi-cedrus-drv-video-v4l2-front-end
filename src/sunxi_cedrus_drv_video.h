@@ -54,6 +54,7 @@ struct sunxi_cedrus_driver_data {
 	char                   *chroma_bufs[VIDEO_MAX_FRAME];
 	unsigned int		num_dst_bufs;
 	int			mem2mem_fd;
+	int			de_frontend_fd;
 };
 
 #endif /* _SUNXI_CEDRUS_DRV_VIDEO_H_ */

@@ -110,6 +110,12 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 
 		assert(ioctl(driver_data->mem2mem_fd, VIDIOC_QUERYBUF, &buf)==0);
 
+		sunxi_cedrus_msg("obj_buffer->buffer_data mmap with size \
+		    * num_elements = %d\n", size * num_elements);
+		sunxi_cedrus_msg("obj_buffer.length = %d\n", buf.length);
+		sunxi_cedrus_msg("plane_size which is max data bytes the plane will contain is \
+		     = %d\n", plane->length);
+		    	    
 		obj_buffer->buffer_data = mmap(NULL, size * num_elements,
 				PROT_READ | PROT_WRITE, MAP_SHARED,
 				driver_data->mem2mem_fd, buf.m.planes[0].m.mem_offset);
@@ -129,9 +135,22 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 
 		sunxi_cedrus_msg("Thomas: data size = %d\n", size);
 
-		if (data)
+		if (data) {
+			/* Thomas 
+			 * If this check fails look at src/context.h:37
+			 * #define INPUT_BUFFER_MAX_SIZE
+			 * this define may be increased to allow for 
+			 * bigger data buffers 
+			 * This assert is here to give a better error than
+			 * a Segmentation fault which shows an error in gdb
+			 * with the memcpy library.
+			 */
+			if (type == VASliceDataBufferType)
+				assert(size <= plane->length);
+				
 			memcpy(obj_buffer->buffer_data, data,
 					size * num_elements);
+		}
 		else
 			sunxi_cedrus_msg("Data == NULL\n");
 	}
@@ -139,6 +158,8 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 
 	if (VA_STATUS_SUCCESS == vaStatus)
 		*buf_id = bufferID;
+
+	sunxi_cedrus_msg("End of %s\n", __FUNCTION__);
 
 	return vaStatus;
 }

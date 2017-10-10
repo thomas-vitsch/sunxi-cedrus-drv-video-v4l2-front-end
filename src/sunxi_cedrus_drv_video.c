@@ -52,28 +52,33 @@
 #include <misc/sunxi_front_end.h>
 #include <drm/drm_fourcc.h>
 
-#define ENABLE_CEDRUS_OUTPUT
-
 struct sfe_config fe_conf = {
 	.input_fmt = DRM_FORMAT_YUV420,
 	.output_fmt = DRM_FORMAT_XRGB8888,
-	.in_width = 864,
+	.in_width = 1920,
+	.in_height = 1080,
+	.out_width = 1920,
+	.out_height = 1080
+/*	.in_width = 864,
 	.in_height = 840,
 	.out_width = 864,
-	.out_height = 840
+	.out_height = 840 */
 }; //TODO: Unless we can really scale the frontend hardcode this for big buck bunneh
+
+
 
 /* We need to use stderr if we want to be heard */
 void sunxi_cedrus_msg(const char *msg, ...)
 {
-#ifdef ENABLE_CEDRUS_OUTPUT
 	va_list args;
 
-	fprintf(stderr, "sunxi_cedrus_drv_video: ");
-	va_start(args, msg);
-	vfprintf(stderr, msg, args);
-	va_end(args);
-#endif
+	if (getenv("SUNXI_CEDRUS_DRV_VIDEO_DEBUG")) {
+
+		fprintf(stderr, "sunxi_cedrus_drv_video: ");
+		va_start(args, msg);
+		vfprintf(stderr, msg, args);
+		va_end(args);
+	}
 }
 
 /* Free memory and close v4l device */

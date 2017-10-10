@@ -96,6 +96,7 @@ VAStatus sunxi_cedrus_Terminate(VADriverContextP ctx)
 	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
 
 	close(driver_data->mem2mem_fd);
+	close(driver_data->mem2mem_output_fd);
 	close(driver_data->de_frontend_fd);
 
 	/* Clean up left over buffers */
@@ -208,6 +209,11 @@ VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
 
 	driver_data->mem2mem_fd = open("/dev/video0", O_RDWR | O_NONBLOCK, 0);
 	assert(driver_data->mem2mem_fd >= 0);
+
+	driver_data->mem2mem_output_fd = open("/dev/video1", O_RDWR | O_NONBLOCK, 0);
+	assert(driver_data->mem2mem_output_fd >= 0);
+	/* All the calls below do de_frintend_fd will become obsolete when the v4l2 device
+	 * will configure it by itself based on some other structs :P */
 
 	//Thomas: Open Allwinner Display Engine Frontend device.
 	// ???NON_BLOCK???

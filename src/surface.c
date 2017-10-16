@@ -25,6 +25,7 @@
 
 #include "sunxi_cedrus_drv_video.h"
 #include "surface.h"
+#include "fe.h" 
 
 #include <assert.h>
 #include <string.h>
@@ -64,8 +65,10 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 	struct v4l2_create_buffers create_bufs;
 	struct v4l2_format fmt;
 
-	sunxi_cedrus_msg("CreateSurface with width %d, height %d\n",
-		width, height);
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
+
+	sunxi_cedrus_msg("CreateSurface num_surfaces %d with width %d, height %d\n",
+		num_surfaces, width, height);
 
 	memset(planes, 0, 2 * sizeof(struct v4l2_plane));
 
@@ -82,12 +85,13 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 	fmt.fmt.pix_mp.field = V4L2_FIELD_ANY;
 	fmt.fmt.pix_mp.num_planes = 2;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_S_FMT, &fmt)==0);
-
+	
 	memset (&create_bufs, 0, sizeof (struct v4l2_create_buffers));
 	create_bufs.count = num_surfaces;
 	create_bufs.memory = V4L2_MEMORY_MMAP;
 	create_bufs.format.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_G_FMT, &create_bufs.format)==0);
+
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_CREATE_BUFS, &create_bufs)==0);
 	driver_data->num_dst_bufs = create_bufs.count;
 
@@ -130,6 +134,7 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 		obj_surface->status = VASurfaceReady;
 	}
 
+
 	/* Error recovery */
 	if (VA_STATUS_SUCCESS != vaStatus)
 	{
@@ -142,6 +147,8 @@ VAStatus sunxi_cedrus_CreateSurfaces(VADriverContextP ctx, int width,
 			object_heap_free(&driver_data->surface_heap, (object_base_p) obj_surface);
 		}
 	}
+	
+	sunxi_cedrus_fe_test(ctx);	
 	return vaStatus;
 }
 
@@ -151,7 +158,7 @@ VAStatus sunxi_cedrus_DestroySurfaces(VADriverContextP ctx,
 	INIT_DRIVER_DATA
 	int i;
 	
-	sunxi_cedrus_msg("sunxi_cedrus_DestroySurface\n");
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 	
 	for(i = num_surfaces; i--;)
 	{
@@ -173,7 +180,7 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
         fd_set read_fds;
 	struct timeval tv = {0, 300000};
 	
-	sunxi_cedrus_msg("sunxi_cedrus_SyncSurface\n");
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	memset(plane, 0, sizeof(struct v4l2_plane));
 	memset(planes, 0, 2 * sizeof(struct v4l2_plane));
@@ -190,7 +197,8 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 
 	//Test if we can throw the buffer back to the Allwinner Display Engine 
 	// Frontend Kernel Module.
-	assert(ioctl(driver_data->de_frontend_fd, SFE_IOCTL_UPDATE_BUFFER, &buf)==0);
+//	assert(ioctl(driver_data->de_frontend_fd, SFE_IOCTL_UPDATE_BUFFER, &buf)==0);
+//	assert(ioctl(driver_data->mem2mem_output_fd, VIDIOC_QBUF, &buf)==0);
 
 	memset(&(buf), 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
@@ -204,6 +212,10 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 		return VA_STATUS_ERROR_UNKNOWN;
 	}
 
+	sunxi_cedrus_msg("\n\nDequeued V4L2_OUT_BUFFER\n");
+	sunxi_cedrus_msg("\tbuf.index = %d, buf.m.planes[0].bytesused %d \n", 
+		buf.index, buf.m.planes[0].bytesused);
+
 	memset(&(buf), 0, sizeof(buf));
 	buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	buf.memory = V4L2_MEMORY_MMAP;
@@ -213,11 +225,25 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 
 	obj_surface->status = VASurfaceReady;
 
+//	if(buf.index == 2)
+	sunxi_cedrus_fe_throw_buffer(ctx, buf);
+
+
 	if(ioctl(driver_data->mem2mem_fd, VIDIOC_DQBUF, &buf)) {
 		sunxi_cedrus_msg("Error when dequeuing output: %s\n", strerror(errno));
 		return VA_STATUS_ERROR_UNKNOWN;
 	}
 
+	sunxi_cedrus_msg("\n\nDequeued V4L2_CAP_BUFFER\n");
+	
+	int p;
+	for (p = 0; p < 2; p++) {
+		//Do we have a decoded frame here?????
+		sunxi_cedrus_msg("\t plane %d, buf.index = %d, .bytesused %d, .length %d, .m.mem_offset %d, .m.userptr %p, .m.fd %d, .m.data_offset %d \n", p,
+			buf.index, buf.m.planes[p].bytesused, buf.m.planes[p].length, buf.m.planes[p].m.mem_offset, buf.m.planes[p].m.userptr, buf.m.planes[p].m.fd, buf.m.planes[p].data_offset);
+	}
+	
+	
 	return VA_STATUS_SUCCESS;
 }
 
@@ -228,6 +254,7 @@ VAStatus sunxi_cedrus_QuerySurfaceStatus(VADriverContextP ctx,
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 	object_surface_p obj_surface;
 
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 	obj_surface = SURFACE(render_target);
 	assert(obj_surface);
 
@@ -254,6 +281,8 @@ VAStatus sunxi_cedrus_PutSurface(VADriverContextP ctx, VASurfaceID surface,
 	int colorratio = 65535 / 255;
 	int x, y;
 	object_surface_p obj_surface;
+
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	obj_surface = SURFACE(surface);
 	assert(obj_surface);

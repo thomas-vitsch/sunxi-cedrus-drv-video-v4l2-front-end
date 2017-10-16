@@ -20,14 +20,15 @@ driver_libs = \
 	$(LIBVA_DEPS_LIBS)
 
 source_c = sunxi_cedrus_drv_video.c object_heap.c buffer.c va_config.c \
-	context.c image.c mpeg2.c mpeg4.c picture.c subpicture.c surface.c
+	context.c image.c mpeg2.c mpeg4.c picture.c subpicture.c surface.c \
+	fe.c
 
 source_s = \
 	tiled_yuv.S
 
 source_h = sunxi_cedrus_drv_video.h object_heap.h buffer.h va_config.h \
 	context.h image.h mpeg2.h mpeg4.h picture.h subpicture.h surface.h \
-	tiled_yuv.h
+	tiled_yuv.h fe.h
 
 sunxi_cedrus_drv_video_la_LTLIBRARIES	= sunxi_cedrus_drv_video.la
 sunxi_cedrus_drv_video_ladir		= $(LIBVA_DRIVERS_PATH)

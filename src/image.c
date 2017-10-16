@@ -51,6 +51,7 @@
 VAStatus sunxi_cedrus_QueryImageFormats(VADriverContextP ctx,
 		VAImageFormat *format_list, int *num_formats)
 {
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 	format_list[0].fourcc = VA_FOURCC_XRGB;	
 	format_list[1].fourcc = VA_FOURCC_NV12;
 	*num_formats = 2;
@@ -64,8 +65,7 @@ VAStatus sunxi_cedrus_CreateImage(VADriverContextP ctx, VAImageFormat *format,
 	int sizeY, sizeUV;
 	object_image_p obj_img;
 
-	sunxi_cedrus_msg("sunxi_cedrus_CreateImage\n");
-
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	image->format = *format;
 	image->buf = VA_INVALID_ID;
@@ -115,7 +115,7 @@ VAStatus sunxi_cedrus_DeriveImage(VADriverContextP ctx, VASurfaceID surface,
 	object_buffer_p obj_buffer;
 	VAStatus ret;
 
-	sunxi_cedrus_msg("sunxi_cedrus_DeriveImage\n");
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	obj_surface = SURFACE(surface);
 //	fmt.fourcc = VA_FOURCC_NV12;
@@ -153,7 +153,7 @@ VAStatus sunxi_cedrus_DestroyImage(VADriverContextP ctx, VAImageID image)
 	INIT_DRIVER_DATA
 	object_image_p obj_img;
 
-	sunxi_cedrus_msg("sunxi_cedrus_DestroyImage\n");
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	obj_img = IMAGE(image);
 	assert(obj_img);

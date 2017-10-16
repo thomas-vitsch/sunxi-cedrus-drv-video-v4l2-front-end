@@ -90,9 +90,19 @@ VAStatus sunxi_cedrus_Terminate(VADriverContextP ctx)
 	object_heap_iterator iter;
 	enum v4l2_buf_type type;
 
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
+
 	type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
+	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
+
+	/* It does not hurt at all to just end both the capture and output 
+	 * streams as the device driver may ignore one mode if it isn't 
+	 * implemented. */
+	type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
+	type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMOFF, &type);
 
 	close(driver_data->mem2mem_fd);
@@ -137,6 +147,8 @@ VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
 	struct VADriverVTable * const vtable = ctx->vtable;
 	struct sunxi_cedrus_driver_data *driver_data;
 	struct v4l2_capability cap;
+
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	ctx->version_major = VA_MAJOR_VERSION;
 	ctx->version_minor = VA_MINOR_VERSION;
@@ -228,6 +240,16 @@ VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
 		sunxi_cedrus_msg("/dev/video0 does not support m2m_mplane\n");
 		return VA_STATUS_ERROR_OPERATION_FAILED;
 	}
+
+	/* Shouldn't the backend query videoX entries for capabilities and then check what they
+	 * are usefull for? */
+	assert(ioctl(driver_data->mem2mem_output_fd, VIDIOC_QUERYCAP, &cap)==0);
+	if (!(cap.capabilities & V4L2_CAP_VIDEO_M2M_MPLANE))
+	{
+		sunxi_cedrus_msg("/dev/video1 does not support m2m_mplane\n");
+		return VA_STATUS_ERROR_OPERATION_FAILED;
+	}
+	
 
 	return VA_STATUS_SUCCESS;
 }

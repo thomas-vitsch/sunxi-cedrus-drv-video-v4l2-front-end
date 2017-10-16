@@ -48,6 +48,7 @@ VAStatus sunxi_cedrus_render_mpeg2_slice_data(VADriverContextP ctx,
 	struct v4l2_buffer buf;
 	struct v4l2_plane plane[1];
 
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2_slice_data: buffer size=%d\n", 
 		obj_buffer->size);
 	sunxi_cedrus_msg("sunxi_cedrus_render_mpeg2_slice_data: input_buf_index = %d\n",
@@ -87,7 +88,7 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 	INIT_DRIVER_DATA
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 
-
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	VAPictureParameterBufferMPEG2 *pic_param = (VAPictureParameterBufferMPEG2 *)obj_buffer->buffer_data;
 

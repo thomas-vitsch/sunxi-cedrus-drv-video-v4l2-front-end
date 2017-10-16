@@ -57,6 +57,8 @@ VAStatus sunxi_cedrus_CreateContext(VADriverContextP ctx, VAConfigID config_id,
 	struct v4l2_format fmt;
 	enum v4l2_buf_type type;
 
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
+
 	sunxi_cedrus_msg("CreateContext with picture_width %d, picture_height %d\n",
 		picture_width, picture_height);
 
@@ -138,16 +140,20 @@ VAStatus sunxi_cedrus_CreateContext(VADriverContextP ctx, VAConfigID config_id,
 	fmt.fmt.pix_mp.num_planes = 1;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_S_FMT, &fmt)==0);
 
-	memset (&create_bufs, 0, sizeof (struct v4l2_create_buffers));
+		
+	memset(&create_bufs, 0, sizeof (struct v4l2_create_buffers));
 	create_bufs.count = INPUT_BUFFERS_NB;
 	create_bufs.memory = V4L2_MEMORY_MMAP;
 	create_bufs.format.type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
+
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_G_FMT, &create_bufs.format)==0);
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_CREATE_BUFS, &create_bufs)==0);
 
+	/* Output is where encoded mpeg data will be stored. */
 	type = V4L2_BUF_TYPE_VIDEO_OUTPUT_MPLANE;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMON, &type)==0);
 
+	/* Capture is where the decoded frame by cedrus will be stored. */
 	type = V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_STREAMON, &type)==0);
 
@@ -159,6 +165,8 @@ VAStatus sunxi_cedrus_DestroyContext(VADriverContextP ctx, VAContextID context)
 	INIT_DRIVER_DATA
 	object_context_p obj_context = CONTEXT(context);
 	assert(obj_context);
+
+	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
 	obj_context->context_id = -1;
 	obj_context->config_id = -1;

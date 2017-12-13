@@ -1,3 +1,19 @@
+Sunxi Cedrus VA backend + WIP Example code implementing Allwinner A20
+frontend.
+=======================
+This driver is based upon the cedrus VA backend.
+The kernel module @ https://github.com/thomas-vitsch/v4l2_front_end is
+needed. And the ve_player @https://github.com/thomas-vitsch/ve_player is
+needed.
+
+This VA backend enables the ve_player to send encoded MPEG2 buffers to the
+cedrus driver, when cedrus returns tiled YUV420 frames, these are sent to
+another device (the frontend of the display engine of the allwinner a20).
+This device detiles and does the color space conversion. The backend of the
+display engine will then use layer2 in the backend to display the result.
+
+This removes the need for detiling the cedrus output with the CPU.
+
 Sunxi Cedrus VA backend
 =======================
 

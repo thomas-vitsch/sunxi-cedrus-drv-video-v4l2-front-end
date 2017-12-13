@@ -140,8 +140,9 @@ VAStatus sunxi_cedrus_RenderPicture(VADriverContextP ctx, VAContextID context,
 		}
 		if (fp >= 0) {
 			buffer_size = (obj_buffer->size * obj_buffer->num_elements);
-			sunxi_cedrus_msg("Add buffer with id %d, size %d, num_elements %d\n", 
-				obj_buffer->type, buffer_size, obj_buffer->num_elements);
+			sunxi_cedrus_msg("Add buffer with id %d, for surface in_idx=%d, out_idx=%d, size %d, num_elements %d\n", 
+				 obj_buffer->type, obj_surface->input_buf_index, obj_surface->output_buf_index, buffer_size, obj_buffer->num_elements);
+			write(fp, &obj_surface->output_buf_index, 4);
 			write(fp, &obj_buffer->type, 4);
 			write(fp, &buffer_size, 4);
 			write(fp, &obj_buffer->num_elements, 4);
@@ -266,6 +267,7 @@ VAStatus sunxi_cedrus_EndPicture(VADriverContextP ctx, VAContextID context)
 	extCtrls.request = obj_surface->request;
 	assert(ioctl(driver_data->mem2mem_fd, VIDIOC_S_EXT_CTRLS, &extCtrls)==0);
 
+	sunxi_cedrus_msg("Queue to cedrus buf_idx %d\n" , cap_buf.index);
 	if(ioctl(driver_data->mem2mem_fd, VIDIOC_QBUF, &cap_buf)) {
 		obj_surface->status = VASurfaceSkipped;
 		sunxi_cedrus_msg("Error when queuing output: %s\n", strerror(errno));

@@ -212,6 +212,7 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 		return VA_STATUS_ERROR_UNKNOWN;
 	}
 
+
 	sunxi_cedrus_msg("\n\nDequeued V4L2_OUT_BUFFER\n");
 	sunxi_cedrus_msg("\tbuf.index = %d, buf.m.planes[0].bytesused %d \n", 
 		buf.index, buf.m.planes[0].bytesused);
@@ -225,16 +226,16 @@ VAStatus sunxi_cedrus_SyncSurface(VADriverContextP ctx,
 
 	obj_surface->status = VASurfaceReady;
 
-//	if(buf.index == 2)
-	sunxi_cedrus_fe_throw_buffer(ctx, buf);
 
 
 	if(ioctl(driver_data->mem2mem_fd, VIDIOC_DQBUF, &buf)) {
 		sunxi_cedrus_msg("Error when dequeuing output: %s\n", strerror(errno));
 		return VA_STATUS_ERROR_UNKNOWN;
 	}
-
+	sunxi_cedrus_msg("Dqueue from cedrus buf_idx %d\n" , buf.index);
 	sunxi_cedrus_msg("\n\nDequeued V4L2_CAP_BUFFER\n");
+
+	sunxi_cedrus_fe_throw_buffer(ctx, buf);
 	
 	int p;
 	for (p = 0; p < 2; p++) {

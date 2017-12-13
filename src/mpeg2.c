@@ -85,10 +85,13 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 		object_context_p obj_context, object_surface_p obj_surface,
 		object_buffer_p obj_buffer)
 {
+	object_surface_p fwd_surface;
+	object_surface_p bwd_surface;
+
 	INIT_DRIVER_DATA
 	VAStatus vaStatus = VA_STATUS_SUCCESS;
 
-	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
+	sunxi_cedrus_msg("----------------------------------------------------------\n%s();\n", __FUNCTION__);
 
 	VAPictureParameterBufferMPEG2 *pic_param = (VAPictureParameterBufferMPEG2 *)obj_buffer->buffer_data;
 
@@ -117,7 +120,7 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 	obj_context->mpeg2_frame_hdr.intra_vlc_format = pic_param->picture_coding_extension.bits.intra_vlc_format;
 	obj_context->mpeg2_frame_hdr.alternate_scan = pic_param->picture_coding_extension.bits.alternate_scan;
 
-	object_surface_p fwd_surface = SURFACE(pic_param->forward_reference_picture);
+	fwd_surface = SURFACE(pic_param->forward_reference_picture);
 	if(fwd_surface) {
 		sunxi_cedrus_msg("-- We got a pic_param->forward_reference_picture with \
 			fwd_surface->output_buf_index %d\n", fwd_surface->output_buf_index);
@@ -126,7 +129,7 @@ VAStatus sunxi_cedrus_render_mpeg2_picture_parameter(VADriverContextP ctx,
 		sunxi_cedrus_msg("-- We got no fwd_surface\n");
 		obj_context->mpeg2_frame_hdr.forward_index = obj_surface->output_buf_index;
 	}
-	object_surface_p bwd_surface = SURFACE(pic_param->backward_reference_picture);
+	bwd_surface = SURFACE(pic_param->backward_reference_picture);
 	if(bwd_surface) {
 		sunxi_cedrus_msg("-- We got a pic_param->backward_reference_picture with \
 			bwd_surface->output_buf_index %d\n", bwd_surface->output_buf_index);

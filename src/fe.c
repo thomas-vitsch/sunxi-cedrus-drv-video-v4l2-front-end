@@ -243,8 +243,8 @@ int sunxi_cedrus_fe_throw_buffer(VADriverContextP ctx, struct v4l2_buffer cedrus
 
 //	ioctl(driver_data->mem2mem_output_fd, VIDIOC_QUERYBUF, &out_buf);
 	
-
 	/////////////////////////////////////////////////////////////////
+	sunxi_cedrus_msg("Qbuf to fe from cedrus buf_idx %d\n" , cedrus_cap_buf.index);
 	if(ioctl(driver_data->mem2mem_output_fd, VIDIOC_QBUF, &out_buf)) {
 		sunxi_cedrus_msg("Error: FE, could not QBUF\n" );
 		ioctl(driver_data->mem2mem_output_fd, VIDIOC_DQBUF, &out_buf);
@@ -270,10 +270,12 @@ int sunxi_cedrus_fe_throw_buffer(VADriverContextP ctx, struct v4l2_buffer cedrus
 		return -1;
 	}
 
-
+//	sleep(1);
 	sunxi_cedrus_msg("Before dequeueing stufff\n");
+	
 	ioctl(driver_data->mem2mem_output_fd, VIDIOC_DQBUF, &out_buf);
 	ioctl(driver_data->mem2mem_output_fd, VIDIOC_DQBUF, &cap_buf);
+	sunxi_cedrus_msg("Dqueue to fe from cedrus buf_idx %d\n" , cedrus_cap_buf.index);
 
 //	assert(ioctl(driver_data->mem2mem_output_fd, VIDIOC_QBUF, &cap_buf)==0);
 	

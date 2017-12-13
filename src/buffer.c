@@ -134,7 +134,8 @@ VAStatus sunxi_cedrus_CreateBuffer(VADriverContextP ctx, VAContextID context,
 		obj_buffer->num_elements = num_elements;
 		obj_buffer->size = size;
 
-		sunxi_cedrus_msg("Thomas: data size = %d\n", size);
+		sunxi_cedrus_msg("Thomas: data size = %d * num_elements %d = %d\n", 
+		    size, num_elements, size * num_elements);
 
 		if (data) {
 			/* Thomas 

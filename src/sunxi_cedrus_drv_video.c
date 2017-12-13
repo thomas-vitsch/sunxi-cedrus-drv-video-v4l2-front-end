@@ -65,20 +65,21 @@ struct sfe_config fe_conf = {
 	.out_height = 840 */
 }; //TODO: Unless we can really scale the frontend hardcode this for big buck bunneh
 
-
+static int cedrus_debug_lvl = 0;
 
 /* We need to use stderr if we want to be heard */
 void sunxi_cedrus_msg(const char *msg, ...)
 {
 	va_list args;
 
-	if (getenv("SUNXI_CEDRUS_DRV_VIDEO_DEBUG")) {
-
+	if(cedrus_debug_lvl) {
 		fprintf(stderr, "sunxi_cedrus_drv_video: ");
 		va_start(args, msg);
 		vfprintf(stderr, msg, args);
 		va_end(args);
 	}
+
+
 }
 
 /* Free memory and close v4l device */
@@ -147,6 +148,10 @@ VAStatus VA_DRIVER_INIT_FUNC(VADriverContextP ctx)
 	struct VADriverVTable * const vtable = ctx->vtable;
 	struct sunxi_cedrus_driver_data *driver_data;
 	struct v4l2_capability cap;
+
+	if (getenv("SUNXI_CEDRUS_DRV_VIDEO_DEBUG")) {
+		cedrus_debug_lvl = 1;
+	}
 
 	sunxi_cedrus_msg("%s();\n", __FUNCTION__);
 
